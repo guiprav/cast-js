@@ -1,20 +1,15 @@
 const {
+  topLevel,
   include,
-  type,
-  farg,
-  fargs,
   ret,
-  block,
   func,
-  sym,
-  str,
-  carg,
-  cargs,
   call,
 } = require('./lib');
 
-const ast = block(
-  include('stdio.h'),
+const emit = require('./emit');
+
+const ast = topLevel(
+  include('<stdio.h>'),
 
   func('main', ret('int'), [
     call('printf', ['Hello, world!\n']),
@@ -22,3 +17,5 @@ const ast = block(
 );
 
 console.log(JSON.stringify(ast, null, 2));
+console.log('===');
+console.log(emit(ast));

@@ -44,9 +44,29 @@ exports.ret = (t) => {
   };
 };
 
+exports.stmt = (x) => {
+  if (exports.isNodeClass(x, 'expr')) {
+    x = {
+      nodeType: 'stmt.expr',
+      x,
+    };
+  }
+
+  if (!exports.isNodeClass(x, 'stmt')) {
+    throw new Error('Invalid statement');
+  }
+
+  return x;
+};
+
+exports.topLevel = (...xs) => ({
+  nodeType: 'topLevel',
+  stmts: xs.map(x => exports.stmt(x)),
+});
+
 exports.block = (...xs) => ({
   nodeType: 'stmt.block',
-  stmts: xs,
+  stmts: xs.map(x => exports.stmt(x)),
 });
 
 exports.func = (...xs) => {
