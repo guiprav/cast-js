@@ -77,8 +77,13 @@ generators['stmt.expr'] = (stmtExpr, ctx) => {
 
 generators['expr.symbol'] = (sym) => sym.x;
 
-generators['expr.string'] = (str) => JSON.gen(str.x);
+generators['expr.number'] = (sym) => sym.x;
+
+generators['expr.string'] = (str) => JSON.stringify(str.x);
 
 generators['expr.call'] = (call, ctx) =>
   `${gen(call.target, ctx)}` +
   `(${call.args.map(x => gen(x, ctx)).join(', ')})`;
+
+generators['stmt.return'] = (ret, ctx) =>
+  ctx.writeln(`return ${gen(ret.val, ctx)};`);

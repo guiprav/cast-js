@@ -132,12 +132,43 @@ exports.sym = function(x) {
   };
 };
 
+exports.num = function(x) {
+  if (isNodeType(x, 'expr.number')) {
+    return x;
+  }
+
+  return {
+    nodeType: 'expr.number',
+    x,
+  };
+};
+
 exports.expr = function(x) {
   if (isNodeClass(x, 'expr')) {
     return x;
   }
 
-  return this.sym(x);
+  switch (typeof x) {
+    case 'string':
+      return this.sym(x);
+
+    case 'number':
+      return this.num(x);
+
+    default:
+      throw new Error('Invalid expression');
+  }
+};
+
+exports.str = function(x) {
+  if (isNodeType(x, 'expr.string')) {
+    return x;
+  }
+
+  return {
+    nodeType: 'expr.string',
+    x,
+  };
 };
 
 exports.call = function(target, ...args) {
@@ -152,6 +183,23 @@ exports.call = function(target, ...args) {
   });
 
   this.exprStmt(node, { implicit: true });
+
+  return node;
+};
+
+exports.return = function(val) {
+  if (!Array.isArray(this.stmts)) {
+    throw new Error('Can\'t append statement to a non-block');
+  }
+
+  const node = createNode({
+    nodeType: 'stmt.return',
+    val: this.expr(val),
+  });
+
+  node.val.nestedExpression = true;
+
+  this.stmts.push(node);
 
   return node;
 };

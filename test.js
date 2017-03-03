@@ -1,8 +1,14 @@
 import c from 'cast';
 
 const ast = c.topLevel(c => {
-  c.func('derp', c => {
-    c.call('test', c.call('nope'));
+  c.include('<stdio.h>');
+
+  c.func('main', c => {
+    c.returns('int');
+
+    c.call('printf', c.str('Hello, world.\n'));
+
+    c.return(0);
   });
 });
 
