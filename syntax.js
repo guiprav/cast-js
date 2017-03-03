@@ -1,4 +1,4 @@
-const { isNodeType } = require('./helpers');
+const { isNodeType, isNodeClass } = require('./helpers');
 const st = require('./state');
 
 function createNode(data) {
@@ -40,18 +40,31 @@ exports.include = function(path) {
   return node;
 };
 
-exports.func = function(name, fn) {
+exports.type = function(x) {
+  if (isNodeType(x, 'type')) {
+    return x;
+  }
+
+  return {
+    nodeType: 'type',
+    x,
+  };
+};
+
+exports.returns = function(type) {
+  if (!isNodeType(this, 'stmt.funcdef')) {
+    throw new Error(
+      'Can\'t declare return type outside function ' +
+      'declaration',
+    );
+  }
+
   const node = createNode({
-    nodeType: 'stmt.funcdef',
-    name,
-    args: [],
-    stmts: [],
+    nodeType: 'funcdef.ret',
+    type: this.type(type),
   });
 
-  this.stmts.push(node);
-
-  fn && fn(node);
-  fixStmts(node);
+  this.ret = node;
 
   return node;
 };
@@ -66,10 +79,28 @@ exports.farg = function(name, type) {
   const node = createNode({
     nodeType: 'funcdef.arg',
     name,
-    type,
+    type: this.type(type),
   });
 
   this.args.push(node);
+
+  return node;
+};
+
+exports.func = function(name, fn) {
+  const node = createNode({
+    nodeType: 'stmt.funcdef',
+    name,
+    args: [],
+    stmts: [],
+  });
+
+  node.returns('void');
+
+  this.stmts.push(node);
+
+  fn && fn(node);
+  fixStmts(node);
 
   return node;
 };
@@ -90,10 +121,29 @@ exports.exprStmt = function(expr, { implicit } = {}) {
   return node;
 };
 
+exports.sym = function(x) {
+  if (isNodeType(x, 'expr.symbol')) {
+    return x;
+  }
+
+  return {
+    nodeType: 'expr.symbol',
+    x,
+  };
+};
+
+exports.expr = function(x) {
+  if (isNodeClass(x, 'expr')) {
+    return x;
+  }
+
+  return this.sym(x);
+};
+
 exports.call = function(target, ...args) {
   const node = createNode({
     nodeType: 'expr.call',
-    target,
+    target: this.expr(target),
     args,
   });
 

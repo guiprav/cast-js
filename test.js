@@ -7,3 +7,5 @@ const ast = c.topLevel(c => {
 });
 
 console.log(JSON.stringify(ast, null, 2));
+console.log('===');
+console.log(c.stringify(ast));
