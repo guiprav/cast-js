@@ -1,6 +1,8 @@
 const generators = {};
 
-function gen(x, ctx) {
+function gen(x, ...ys) {
+  const ctx = ys.pop();
+
   const generator = generators[x.nodeType];
 
   if (!generator) {
@@ -9,7 +11,7 @@ function gen(x, ctx) {
     );
   }
 
-  return generator(x, ctx);
+  return generator(x, ...ys, ctx);
 }
 
 exports.stringify = (x, ctx = {}) => {
@@ -34,10 +36,80 @@ generators['stmt.block'] = (block, ctx) =>
 generators['stmt.include'] = (include, ctx) =>
   `#include ${include.path}\n`;
 
-generators['type'] = (type) => type.x;
+generators['type'] = (type, ...xs) => {
+  const name = (() => {
+    if (typeof xs[0] !== 'string') {
+      return;
+    }
+
+    return xs.shift();
+  })();
+
+  const ctx = xs.shift();
+
+  let y = '';
+
+  const storage = type.hasOwnProperty('storage') && type.storage;
+
+  if (storage && storage !== 'auto') {
+    y += `${storage} `;
+  }
+
+  const fnPtr = type.hasOwnProperty('fnPtr') && type.fnPtr;
+  const ptr = type.hasOwnProperty('ptr') && type.ptr;
+
+  const stars = (() => {
+    const lvl = (ptr || 0) + Number(!!fnPtr);
+
+    return new Array(lvl + 1).join('*');
+  })();
+
+  function getArraySizes(type) {
+    const array = type.hasOwnProperty('array') && type.array;
+
+    if (!array.length) {
+      return '';
+    }
+
+    return `[${array.map(x => {
+      if (x === 'n') {
+        return '';
+      }
+
+      return x;
+    }).join('][')}]`;
+  }
+
+  const arraySizes = getArraySizes(type);
+
+  if (fnPtr) {
+    const returnTypeArraySizes = getArraySizes(type.returnType);
+
+    const returnType = Object.assign({}, type.returnType, {
+      array: [],
+    });
+
+    y += `${gen(returnType, ctx)} (${stars}${name || ''}${arraySizes})`;
+    y += `(${type.args.map(y => gen(y, ctx)).join(', ')})${returnTypeArraySizes}`;
+
+    return y;
+  }
+
+  ['const', 'volatile'].forEach(cv => {
+    if (!type[cv]) {
+      return;
+    }
+
+    y += `${cv} `;
+  });
+
+  y += `${type.x} ${stars}${name || ''}`;
+
+  return `${y.trim()}${arraySizes}`;
+};
 
 generators['funcdef.arg'] = (arg, ctx) =>
-  `${gen(arg.type, ctx)} ${arg.name}`;
+  gen(arg.type, arg.name, ctx);
 
 generators['stmt.funcdef'] = (funcdef, ctx) => {
   const type = gen(funcdef.returnType, ctx);
@@ -84,7 +156,7 @@ generators['stmt.struct'] = (struct, ctx) => {
 };
 
 generators['struct.field'] = (field, ctx) =>
-  `${field.type.x} ${field.name};\n`;
+  `${gen(field.type, field.name, ctx)};\n`;
 
 generators['stmt.define'] = (def, ctx) => {
   const args = (() => {
@@ -141,5 +213,5 @@ generators['stmt.var'] = (_var, ctx) => {
     return ` = ${gen(_var.init, ctx)}`;
   })();
 
-  return `${gen(_var.type, ctx)} ${_var.name}${init};\n`;
+  return `${gen(_var.type, _var.name, ctx)}${init};\n`;
 };

@@ -49,14 +49,165 @@ exports.type = function(x) {
     return x;
   }
 
-  return {
+  const node = {
     nodeType: 'type',
-    x,
   };
+
+  const xs = x.split(' ');
+
+  (() => {
+    let x;
+
+    while(x = xs.shift()) {
+      switch (x) {
+        case 'const':
+          node.const = true;
+          break;
+
+        case 'volatile':
+          node.volatile = true;
+          break;
+
+        case 'auto':
+        case 'extern':
+        case 'static':
+        case 'register':
+          if (node.storage) {
+            throw new Error('Can\'t mix storage specifiers');
+          }
+
+          node.storage = x;
+          break;
+
+        default:
+          xs.unshift(x);
+          return;
+      }
+    }
+  })();
+
+  node.storage = node.storage || 'auto';
+
+  node.x = xs.join(' ');
+
+  return node;
+};
+
+exports.const = function(x) {
+  x = this.type(x);
+
+  x.const = true;
+
+  return x;
+};
+
+exports.notConst = function(x) {
+  x = this.type(x);
+
+  delete x.const;
+
+  return x;
+};
+
+exports.volatile = function(x) {
+  x = this.type(x);
+
+  x.volatile = true;
+
+  return x;
+};
+
+exports.notVolatile = function(x) {
+  x = this.type(x);
+
+  delete x.volatile;
+
+  return x;
+};
+
+exports.storage = function(spec, x) {
+  x = this.type(x);
+
+  x.storage = spec;
+
+  return x;
+};
+
+exports.ptr = function(...xs) {
+  let lvl = 1;
+
+  if (xs.length >= 2) {
+    lvl = xs.shift();
+  }
+
+  const node = this.type(xs[0]);
+
+  node.ptr = (node.hasOwnProperty('ptr') && node.ptr) || 0;
+  node.ptr += lvl;
+
+  return node;
+};
+
+exports.dropPtr = function(...xs) {
+  let lvl = 1;
+
+  if (xs.length >= 2) {
+    lvl = xs.shift();
+  }
+
+  const node = this.type(xs[0]);
+
+  node.ptr -= lvl;
+
+  if (node.ptr < 0) {
+    delete node.ptr;
+  }
+
+  return node;
+};
+
+exports.fnPtr = function(fn) {
+  const node = createNode({
+    nodeType: 'type',
+    fnPtr: true,
+    args: [],
+  });
+
+  fn(node);
+
+  return node;
+};
+
+exports.array = function(...xs) {
+  const sizes = (() => {
+    const ys = [];
+
+    while(typeof xs[0] === 'number' || xs[0] === 'n') {
+      ys.push(xs.shift());
+    }
+
+    return ys;
+  })();
+
+  if (!sizes.length) {
+    sizes.push('n');
+  }
+
+  const node = this.type(xs[0]);
+
+  node.array =
+    (node.hasOwnProperty('array') && node.array) || [];
+
+  node.array.push(...sizes);
+
+  return node;
 };
 
 exports.returns = function(type) {
-  if (!isNodeType(this, 'stmt.funcdef')) {
+  if (
+    !isNodeType(this, 'stmt.funcdef')
+    && !this.fnPtr
+  ) {
     throw new Error(
       'Can\'t declare return type outside function ' +
       'declaration',
@@ -69,7 +220,10 @@ exports.returns = function(type) {
 };
 
 exports.farg = function(name, type) {
-  if (!isNodeType(this, 'stmt.funcdef')) {
+  if (
+    !isNodeType(this, 'stmt.funcdef')
+    && !this.fnPtr
+  ) {
     throw new Error(
       'Can\'t declare argument outside function declaration',
     );
