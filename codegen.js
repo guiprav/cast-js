@@ -36,13 +36,20 @@ generators['stmt.include'] = (include, ctx) =>
 
 generators['type'] = (type) => type.x;
 
+generators['funcdef.arg'] = (arg, ctx) =>
+  `${gen(arg.type, ctx)} ${arg.name}`;
+
 generators['stmt.funcdef'] = (funcdef, ctx) => {
   const type = gen(funcdef.returnType, ctx);
 
-  return `${type} ${funcdef.name}() ${gen({
+  const args = funcdef.args.map(x => gen(x, ctx)).join(', ');
+
+  const body = gen({
     nodeType: 'stmt.block',
     stmts: funcdef.stmts,
-  }, ctx)}`;
+  }, ctx);
+
+  return `${type} ${funcdef.name}(${args}) ${body}`;
 };
 
 generators['stmt.expr'] = (stmtExpr, ctx) =>
