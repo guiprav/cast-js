@@ -36,10 +36,8 @@ generators['stmt.include'] = (include, ctx) =>
 
 generators['type'] = (type) => type.x;
 
-generators['funcdef.ret'] = (ret, ctx) => gen(ret.type, ctx);
-
 generators['stmt.funcdef'] = (funcdef, ctx) => {
-  const type = gen(funcdef.ret);
+  const type = gen(funcdef.returnType, ctx);
 
   return `${type} ${funcdef.name}() ${gen({
     nodeType: 'stmt.block',

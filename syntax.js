@@ -63,14 +63,9 @@ exports.returns = function(type) {
     );
   }
 
-  const node = createNode({
-    nodeType: 'funcdef.ret',
-    type: this.type(type),
-  });
+  this.returnType = this.type(type);
 
-  this.ret = node;
-
-  return node;
+  return this.returnType;
 };
 
 exports.farg = function(name, type) {
