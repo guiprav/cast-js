@@ -13,3 +13,7 @@ exports.isNodeClass = (node, _class) => {
 
   return node.nodeType.startsWith(`${_class}.`);
 };
+
+exports.filterNullNodes = xs => xs.filter(
+  x => !exports.isNodeType(x, 'null'),
+);
