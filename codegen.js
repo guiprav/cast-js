@@ -186,6 +186,11 @@ generators['expr.subscript'] = (subscript, ctx) =>
 generators['stmt.if'] = (_if, ctx) =>
   `if (${gen(_if.cond, ctx)}) {\n${ctx.indent(
     _if.stmts.map(x => gen(x, ctx)).join(''),
+  )}}\n${_if.elseClauses.map(x => gen(x, ctx)).join('')}`;
+
+generators['if.else'] = (_if, ctx) =>
+  `else {\n${ctx.indent(
+    _if.stmts.map(x => gen(x, ctx)).join(''),
   )}}\n`;
 
 generators['stmt.goto'] = (_goto, ctx) =>

@@ -564,6 +564,7 @@ exports.if = function(cond, fn) {
     nodeType: 'stmt.if',
     cond: this.nestedExpr(cond),
     stmts: [],
+    elseClauses: [],
   });
 
   fn && fn(node);
@@ -571,6 +572,32 @@ exports.if = function(cond, fn) {
   this.stmts && this.stmts.push(node);
 
   return node;
+};
+
+exports.else = function(fn) {
+  if (!isNodeType(this, 'stmt.if')) {
+    throw new Error(
+      'Can\'t add else clause to non-if statement.',
+    );
+  }
+
+  const lastElseClause =
+    this.elseClauses[this.elseClauses.length - 1];
+
+  if (isNodeType(lastElseClause, 'if.else')) {
+    throw new Error('Else clauses aren\'t chainable.');
+  }
+
+  const node = createNode({
+    nodeType: 'if.else',
+    stmts: [],
+  });
+
+  fn && fn(node);
+
+  this.elseClauses.push(node);
+
+  return this;
 };
 
 exports.goto = function(label, fn) {
