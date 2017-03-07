@@ -209,14 +209,11 @@ generators['expr.multary'] = (multary, ctx) =>
     ` ${multary.op} `,
   )})`;
 
-generators['stmt.var'] = (_var, ctx) => {
-  const init = (() => {
+generators['expr.var'] = (_var, ctx) =>
+  `${gen(_var.type, _var.name, ctx)}${(() => {
     if (!_var.init) {
       return '';
     }
 
     return ` = ${gen(_var.init, ctx)}`;
-  })();
-
-  return `${gen(_var.type, _var.name, ctx)}${init};\n`;
-};
+  })()}`;

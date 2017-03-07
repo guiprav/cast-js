@@ -657,22 +657,19 @@ exports.assign = function(...xs) {
 };
 
 exports.var = function(name, type, init) {
-  if (
-    !Array.isArray(this.stmts)
-    && !isNodeType(this, 'stmt.define')
-  ) {
-    throw new Error('Can\'t append statement to a non-block');
-  }
-
   const node = {
-    nodeType: 'stmt.var',
+    nodeType: 'expr.var',
     name,
     type: this.type(type),
   };
 
-  init && (node.init = this.nestedExpr(init));
+  if (init !== undefined) {
+    node.init = this.nestedExpr(init);
+  }
 
-  this.stmts && this.stmts.push(node);
+  if (!isNodeType(this, 'stmt.define')) {
+    this.exprStmt(node, { implicit: true });
+  }
 
   return node;
 };
