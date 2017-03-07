@@ -488,6 +488,14 @@ exports.op = function(op, ...xs) {
   };
 };
 
+exports.incr = function(x) {
+  return this.op('++', x);
+};
+
+exports.decr = function(x) {
+  return this.op('--', x);
+};
+
 exports.not = function(x) {
   return this.op('!', x);
 };
