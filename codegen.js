@@ -193,6 +193,20 @@ generators['if.else'] = (_if, ctx) =>
     _if.stmts.map(x => gen(x, ctx)).join(''),
   )}}\n`;
 
+generators['for.init'] =
+generators['for.test'] =
+generators['for.step'] = (x, ctx) => gen(x.expr, ctx);
+
+generators['stmt.for'] = (_for, ctx) => {
+  const init = _for.$init && gen(_for.$init, ctx);
+  const test = _for.$test && gen(_for.$test, ctx);
+  const step = _for.$step && gen(_for.$step, ctx);
+
+  return `for (${init}; ${test}; ${step}) {\n${ctx.indent(
+    _for.stmts.map(x => gen(x, ctx)).join(''),
+  )}}\n`;
+};
+
 generators['stmt.goto'] = (_goto, ctx) =>
   `goto ${_goto.label};\n`;
 

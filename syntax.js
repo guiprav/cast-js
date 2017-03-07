@@ -610,6 +610,93 @@ exports.else = function(fn) {
   return this;
 };
 
+exports.for = function(fn) {
+  if (
+    !Array.isArray(this.stmts)
+    && !isNodeType(this, 'stmt.define')
+  ) {
+    throw new Error('Can\'t append statement to a non-block');
+  }
+
+  const node = createNode({
+    nodeType: 'stmt.for',
+    $init: null,
+    $test: null,
+    $step: null,
+    stmts: [],
+  });
+
+  fn && fn(node);
+  fixStmts(node);
+
+  this.stmts && this.stmts.push(node);
+
+  return node;
+};
+
+exports.init = function(expr) {
+  if (!isNodeType(this, 'stmt.for')) {
+    throw new Error(
+      'Can\'t set init expression outside for statement.',
+    );
+  }
+
+  if (this.$init) {
+    throw new Error('Duplicate init expression not allowed.');
+  }
+
+  const node = createNode({
+    nodeType: 'for.init',
+    expr: this.nestedExpr(expr),
+  });
+
+  this.$init = node;
+
+  return node;
+};
+
+exports.test = function(expr) {
+  if (!isNodeType(this, 'stmt.for')) {
+    throw new Error(
+      'Can\'t set test expression outside for statement.',
+    );
+  }
+
+  if (this.$test) {
+    throw new Error('Duplicate test expression not allowed.');
+  }
+
+  const node = createNode({
+    nodeType: 'for.test',
+    expr: this.nestedExpr(expr),
+  });
+
+  this.$test = node;
+
+  return node;
+};
+
+exports.step = function(expr) {
+  if (!isNodeType(this, 'stmt.for')) {
+    throw new Error(
+      'Can\'t set step expression outside for statement.',
+    );
+  }
+
+  if (this.$step) {
+    throw new Error('Duplicate step expression not allowed.');
+  }
+
+  const node = createNode({
+    nodeType: 'for.step',
+    expr: this.nestedExpr(expr),
+  });
+
+  this.$step = node;
+
+  return node;
+};
+
 exports.goto = function(label, fn) {
   if (
     !Array.isArray(this.stmts)
