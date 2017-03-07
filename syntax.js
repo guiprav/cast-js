@@ -568,6 +568,7 @@ exports.if = function(cond, fn) {
   });
 
   fn && fn(node);
+  fixStmts(node);
 
   this.stmts && this.stmts.push(node);
 
@@ -594,6 +595,7 @@ exports.else = function(fn) {
   });
 
   fn && fn(node);
+  fixStmts(node);
 
   this.elseClauses.push(node);
 
