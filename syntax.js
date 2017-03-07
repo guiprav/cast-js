@@ -462,7 +462,7 @@ exports.block = function(fn) {
   return node;
 };
 
-exports.subscript = function(x, y) {
+exports.at = function(x, y) {
   return {
     nodeType: 'expr.subscript',
     x: this.nestedExpr(x),
